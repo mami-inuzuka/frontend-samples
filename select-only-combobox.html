@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>Select-only Combobox サンプル</title>
+  <title>Combobox パターン サンプル</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; }
     body { font-family: sans-serif; padding: 40px; background: #f5f5f5; margin: 0; }
@@ -148,12 +148,58 @@
       margin-bottom: 16px;
     }
     .section-heading.blue { background: #0066cc; }
+    .section-heading.green { background: #16834e; }
+    .code-header.editable { background: #16834e; }
+
+    /* --- Editable Combobox --- */
+    .editable-wrapper { position: relative; width: 100%; max-width: 280px; }
+
+    .editable-input {
+      width: 100%;
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+    }
+    .editable-input:focus { outline: 2px solid #16834e; outline-offset: -1px; }
+
+    .editable-listbox {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 4px;
+      list-style: none;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .editable-listbox[hidden] { display: none; }
+
+    .editable-option {
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: default;
+      font-size: 14px;
+    }
+    .editable-option[aria-selected="true"] { background: #e6f4ed; color: #16834e; }
+    .editable-option .match { font-weight: bold; }
+
+    .editable-empty {
+      padding: 10px 12px;
+      font-size: 13px;
+      color: #999;
+    }
   </style>
 </head>
 <body>
 
-<h1>ネイティブ &lt;select&gt; vs Select-only Combobox</h1>
-<div class="subtitle">ドロップダウンの中身をカスタマイズできるかどうかの違い</div>
+<h1>Combobox パターン サンプル</h1>
+<div class="subtitle">ネイティブ &lt;select&gt; / Select-only Combobox / Editable Combobox の比較</div>
 
 <!-- ==================== 1. ネイティブ select ==================== -->
 <div class="section-heading">1. ネイティブ &lt;select&gt; + CSS</div>
@@ -257,6 +303,61 @@
   </div>
 </div>
 
+<!-- ==================== 3. Editable Combobox ==================== -->
+<div class="section-heading green">3. Editable Combobox（テキスト入力で絞り込み）</div>
+<div class="row">
+  <div class="row-demo">
+    <div class="row-label">Sample</div>
+    <label id="lang-label" class="combobox-label">言語を選択</label>
+    <div class="editable-wrapper">
+      <input
+        id="lang-combobox"
+        type="text"
+        role="combobox"
+        aria-labelledby="lang-label"
+        aria-haspopup="listbox"
+        aria-expanded="true"
+        aria-controls="lang-listbox"
+        aria-autocomplete="list"
+        class="editable-input"
+        placeholder="言語を検索..."
+        autocomplete="off"
+      />
+      <ul id="lang-listbox" role="listbox" aria-labelledby="lang-label" class="editable-listbox">
+      </ul>
+    </div>
+    <p style="font-size:12px; color:#999; margin: 12px 0 0;">テキスト入力で候補を絞り込み、リストから選択する（DeepL の言語選択と同じパターン）</p>
+  </div>
+  <div class="row-code">
+    <div class="code-header editable">実装イメージ</div>
+    <pre><span class="cmt">&lt;!-- Select-only との違い: input 要素を使う --&gt;</span>
+
+<span class="tag">&lt;input</span>
+  <span class="attr">role</span>=<span class="val">"combobox"</span>
+  <span class="attr">aria-expanded</span>=<span class="val">"true"</span>
+  <span class="attr">aria-controls</span>=<span class="val">"listbox"</span>
+  <span class="attr">aria-autocomplete</span>=<span class="val">"list"</span>
+<span class="tag">/&gt;</span>
+
+<span class="tag">&lt;ul</span> <span class="attr">role</span>=<span class="val">"listbox"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;li</span> <span class="attr">role</span>=<span class="val">"option"</span><span class="tag">&gt;</span>日本語<span class="tag">&lt;/li&gt;</span>
+  <span class="tag">&lt;li</span> <span class="attr">role</span>=<span class="val">"option"</span><span class="tag">&gt;</span>英語<span class="tag">&lt;/li&gt;</span>
+  ...
+<span class="tag">&lt;/ul&gt;</span>
+
+<span class="cmt">&lt;!-- JS: 入力に応じてフィルタリング --&gt;</span>
+<span class="tag">&lt;script&gt;</span>
+  input.<span class="fn">addEventListener</span>(<span class="str">'input'</span>, () =&gt; {
+    <span class="cmt">// 入力テキストで候補を絞り込む</span>
+    filtered = items.<span class="fn">filter</span>(s =&gt;
+      s.<span class="fn">includes</span>(input.value)
+    )
+    <span class="fn">renderOptions</span>(filtered)
+  })
+<span class="tag">&lt;/script&gt;</span></pre>
+  </div>
+</div>
+
 <script>
 const combobox = document.getElementById('fruit-combobox');
 const listbox = document.getElementById('fruit-listbox');
@@ -318,6 +419,131 @@ listbox.addEventListener('click', (e) => {
 });
 
 document.addEventListener('click', (e) => { if (!e.target.closest('.combobox-wrapper')) close(); });
+
+// ==================== 3. Editable Combobox ====================
+const langInput = document.getElementById('lang-combobox');
+const langListbox = document.getElementById('lang-listbox');
+const languages = [
+  '日本語', '英語', '英語（イギリス）', 'フランス語', 'ドイツ語', 'スペイン語',
+  '中国語（簡体字）', '中国語（繁体字）', '韓国語', 'イタリア語', 'ポルトガル語',
+  'ロシア語', 'アラビア語', 'ヒンディー語', 'タイ語', 'ベトナム語',
+  'インドネシア語', 'オランダ語', 'ポーランド語', 'スウェーデン語'
+];
+let edActiveIndex = -1;
+let edIsOpen = true;
+
+function edRender(items, query) {
+  langListbox.innerHTML = '';
+  if (items.length === 0) {
+    langListbox.innerHTML = '<li class="editable-empty">該当なし</li>';
+    return;
+  }
+  items.forEach((lang, i) => {
+    const li = document.createElement('li');
+    li.role = 'option';
+    li.id = `lang-opt-${i}`;
+    li.className = 'editable-option';
+    li.setAttribute('aria-selected', 'false');
+    if (query) {
+      const idx = lang.indexOf(query);
+      if (idx >= 0) {
+        li.innerHTML = lang.slice(0, idx)
+          + '<span class="match">' + query + '</span>'
+          + lang.slice(idx + query.length);
+      } else {
+        li.textContent = lang;
+      }
+    } else {
+      li.textContent = lang;
+    }
+    langListbox.appendChild(li);
+  });
+  edActiveIndex = -1;
+}
+
+function edOpen(items, query) {
+  edIsOpen = true;
+  edRender(items, query);
+  langListbox.hidden = false;
+  langInput.setAttribute('aria-expanded', 'true');
+}
+
+function edClose() {
+  edIsOpen = false;
+  langListbox.hidden = true;
+  langInput.setAttribute('aria-expanded', 'false');
+  langInput.removeAttribute('aria-activedescendant');
+  edActiveIndex = -1;
+}
+
+function edSetActive(index) {
+  const opts = langListbox.querySelectorAll('[role="option"]');
+  if (opts.length === 0) return;
+  if (edActiveIndex >= 0 && edActiveIndex < opts.length) opts[edActiveIndex].setAttribute('aria-selected', 'false');
+  edActiveIndex = index;
+  if (edActiveIndex < 0) edActiveIndex = opts.length - 1;
+  if (edActiveIndex >= opts.length) edActiveIndex = 0;
+  opts[edActiveIndex].setAttribute('aria-selected', 'true');
+  langInput.setAttribute('aria-activedescendant', opts[edActiveIndex].id);
+  opts[edActiveIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function edSelect(index) {
+  const opts = langListbox.querySelectorAll('[role="option"]');
+  if (index >= 0 && index < opts.length) {
+    langInput.value = opts[index].textContent;
+    edClose();
+  }
+}
+
+function edFilter() {
+  const q = langInput.value;
+  return q ? languages.filter(l => l.includes(q)) : languages;
+}
+
+langInput.addEventListener('input', () => {
+  const matched = edFilter();
+  edOpen(matched, langInput.value);
+});
+
+langInput.addEventListener('focus', () => {
+  if (!edIsOpen) edOpen(edFilter(), langInput.value);
+});
+
+langInput.addEventListener('keydown', (e) => {
+  const opts = langListbox.querySelectorAll('[role="option"]');
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      if (!edIsOpen) edOpen(edFilter(), langInput.value);
+      edSetActive(edActiveIndex + 1);
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      if (edIsOpen) edSetActive(edActiveIndex - 1);
+      break;
+    case 'Enter':
+      if (edIsOpen && edActiveIndex >= 0) { e.preventDefault(); edSelect(edActiveIndex); }
+      break;
+    case 'Escape':
+      if (edIsOpen) { e.preventDefault(); edClose(); }
+      break;
+  }
+});
+
+langListbox.addEventListener('click', (e) => {
+  const opt = e.target.closest('[role="option"]');
+  if (opt) {
+    const i = Array.from(langListbox.querySelectorAll('[role="option"]')).indexOf(opt);
+    edSetActive(i);
+    edSelect(i);
+  }
+});
+
+document.addEventListener('click', (e) => { if (!e.target.closest('.editable-wrapper')) edClose(); });
+
+// 初期表示
+edRender(languages, '');
 </script>
 
 </body>
