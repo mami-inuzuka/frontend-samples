@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Select-only Combobox サンプル</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body { font-family: sans-serif; padding: 40px; background: #f5f5f5; margin: 0; }
+
+    h1 { font-size: 20px; margin: 0 0 8px; }
+    h2 { font-size: 16px; margin: 0 0 4px; color: #333; }
+    .subtitle { font-size: 13px; color: #888; margin-bottom: 32px; }
+
+    /* --- 横並びレイアウト --- */
+    .row {
+      display: flex;
+      gap: 32px;
+      margin-bottom: 56px;
+      align-items: flex-start;
+    }
+    .row-demo {
+      flex: 1;
+      min-width: 0;
+      padding: 24px;
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 12px;
+    }
+    .row-code {
+      flex: 1;
+      min-width: 0;
+      background: #1e1e1e;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .row-label {
+      font-size: 11px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #999;
+      margin-bottom: 6px;
+    }
+
+    /* --- ネイティブ select --- */
+    .native-select {
+      appearance: none;
+      padding: 10px 36px 10px 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' fill='none' stroke-width='2'/%3E%3C/svg%3E") no-repeat right 12px center;
+      width: 100%;
+      max-width: 280px;
+    }
+
+    /* --- Select-only Combobox --- */
+    .combobox-label { display: block; margin-bottom: 4px; font-weight: bold; font-size: 14px; }
+    .combobox-wrapper { position: relative; width: 100%; max-width: 280px; }
+
+    .combobox-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      cursor: pointer;
+      user-select: none;
+      width: 100%;
+    }
+    .combobox-trigger:focus { outline: 2px solid #0066cc; outline-offset: -1px; }
+    .combobox-trigger .arrow { font-size: 12px; color: #666; transition: transform 0.2s; }
+    .combobox-trigger[aria-expanded="true"] .arrow { transform: rotate(180deg); }
+
+    .combobox-listbox {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      margin: 0;
+      padding: 4px;
+      list-style: none;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      z-index: 10;
+    }
+    .combobox-listbox[hidden] { display: none; }
+
+    .combobox-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      cursor: default;
+    }
+    .combobox-option[aria-selected="true"] { background: #e8f0fe; color: #0066cc; }
+
+    .option-icon {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+    .option-content { display: flex; flex-direction: column; }
+    .option-label { font-size: 14px; }
+    .option-desc { font-size: 11px; color: #888; }
+
+    /* --- コードパネル --- */
+    .code-header {
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .code-header.native { background: #555; }
+    .code-header.combobox { background: #0066cc; }
+    pre {
+      margin: 0;
+      padding: 16px;
+      font-size: 11.5px;
+      line-height: 1.6;
+      overflow-x: auto;
+      color: #d4d4d4;
+      font-family: 'SF Mono', 'Consolas', monospace;
+    }
+    .tag { color: #569cd6; }
+    .attr { color: #9cdcfe; }
+    .val { color: #ce9178; }
+    .cmt { color: #6a9955; }
+    .fn { color: #dcdcaa; }
+    .str { color: #ce9178; }
+
+    /* --- セクション見出し --- */
+    .section-heading {
+      font-size: 13px;
+      font-weight: bold;
+      color: #fff;
+      background: #555;
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .section-heading.blue { background: #0066cc; }
+  </style>
+</head>
+<body>
+
+<h1>ネイティブ &lt;select&gt; vs Select-only Combobox</h1>
+<div class="subtitle">ドロップダウンの中身をカスタマイズできるかどうかの違い</div>
+
+<!-- ==================== 1. ネイティブ select ==================== -->
+<div class="section-heading">1. ネイティブ &lt;select&gt; + CSS</div>
+<div class="row">
+  <div class="row-demo">
+    <div class="row-label">Sample</div>
+    <select class="native-select">
+      <option>🍎 りんご</option>
+      <option>🍊 みかん</option>
+      <option>🍇 ぶどう</option>
+      <option>🍌 バナナ</option>
+      <option>🍓 いちご</option>
+    </select>
+    <p style="font-size:12px; color:#999; margin: 12px 0 0;">トリガーの見た目は変えられるが、ドロップダウンの中身はブラウザ任せ</p>
+  </div>
+  <div class="row-code">
+    <div class="code-header native">Code</div>
+    <pre><span class="tag">&lt;select&gt;</span>
+  <span class="tag">&lt;option&gt;</span>りんご<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;option&gt;</span>みかん<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;option&gt;</span>ぶどう<span class="tag">&lt;/option&gt;</span>
+<span class="tag">&lt;/select&gt;</span>
+
+<span class="cmt">&lt;!-- JS 不要 --&gt;</span>
+<span class="cmt">&lt;!-- ARIA 不要（ブラウザが自動付与） --&gt;</span>
+<span class="cmt">&lt;!-- キーボード操作も自動 --&gt;</span></pre>
+  </div>
+</div>
+
+<!-- ==================== 2. Select-only Combobox ==================== -->
+<div class="section-heading blue">2. Select-only Combobox</div>
+<div class="row">
+  <div class="row-demo">
+    <div class="row-label">Sample</div>
+    <label id="fruit-label" class="combobox-label">果物を選択</label>
+    <div class="combobox-wrapper">
+      <div
+        id="fruit-combobox"
+        role="combobox"
+        tabindex="0"
+        aria-labelledby="fruit-label"
+        aria-haspopup="listbox"
+        aria-expanded="true"
+        aria-controls="fruit-listbox"
+        class="combobox-trigger"
+      >
+        <span id="combobox-value">選択してください</span>
+        <span class="arrow">▼</span>
+      </div>
+      <ul id="fruit-listbox" role="listbox" aria-labelledby="fruit-label" class="combobox-listbox">
+        <li role="option" id="opt-apple" class="combobox-option" aria-selected="false" data-value="apple">
+          <span class="option-icon" style="background:#fde8e8">🍎</span>
+          <span class="option-content"><span class="option-label">りんご</span><span class="option-desc">青森県産 / さっぱり甘い</span></span>
+        </li>
+        <li role="option" id="opt-orange" class="combobox-option" aria-selected="false" data-value="orange">
+          <span class="option-icon" style="background:#fff3e0">🍊</span>
+          <span class="option-content"><span class="option-label">みかん</span><span class="option-desc">愛媛県産 / ジューシー</span></span>
+        </li>
+        <li role="option" id="opt-grape" class="combobox-option" aria-selected="false" data-value="grape">
+          <span class="option-icon" style="background:#f3e5f5">🍇</span>
+          <span class="option-content"><span class="option-label">ぶどう</span><span class="option-desc">山梨県産 / 濃厚な甘み</span></span>
+        </li>
+        <li role="option" id="opt-banana" class="combobox-option" aria-selected="false" data-value="banana">
+          <span class="option-icon" style="background:#fffde7">🍌</span>
+          <span class="option-content"><span class="option-label">バナナ</span><span class="option-desc">フィリピン産 / 栄養たっぷり</span></span>
+        </li>
+        <li role="option" id="opt-strawberry" class="combobox-option" aria-selected="false" data-value="strawberry">
+          <span class="option-icon" style="background:#fce4ec">🍓</span>
+          <span class="option-content"><span class="option-label">いちご</span><span class="option-desc">栃木県産 / とちおとめ</span></span>
+        </li>
+      </ul>
+    </div>
+    <p style="font-size:12px; color:#999; margin: 12px 0 0;">ドロップダウンの中身まで自由にデザイン可能</p>
+  </div>
+  <div class="row-code">
+    <div class="code-header combobox">Code</div>
+    <pre><span class="cmt">&lt;!-- HTML: 構造を自分で組む --&gt;</span>
+
+<span class="tag">&lt;div</span> <span class="attr">role</span>=<span class="val">"combobox"</span>
+     <span class="attr">aria-expanded</span>=<span class="val">"false"</span>
+     <span class="attr">aria-controls</span>=<span class="val">"listbox"</span><span class="tag">&gt;</span>
+  選択してください ▼
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="tag">&lt;ul</span> <span class="attr">role</span>=<span class="val">"listbox"</span> <span class="attr">hidden</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;li</span> <span class="attr">role</span>=<span class="val">"option"</span><span class="tag">&gt;</span>
+    <span class="cmt">&lt;!-- 自由なレイアウト --&gt;</span>
+    <span class="tag">&lt;span&gt;</span>🍎<span class="tag">&lt;/span&gt;</span>
+    <span class="tag">&lt;span&gt;</span>りんご<span class="tag">&lt;/span&gt;</span>
+    <span class="tag">&lt;span&gt;</span>青森県産 / さっぱり甘い<span class="tag">&lt;/span&gt;</span>
+  <span class="tag">&lt;/li&gt;</span>
+  ...
+<span class="tag">&lt;/ul&gt;</span>
+
+<span class="cmt">&lt;!-- JS: 開閉・キーボード・選択を全部自作 --&gt;</span>
+<span class="tag">&lt;script&gt;</span>
+  cb.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, open)
+  cb.<span class="fn">addEventListener</span>(<span class="str">'keydown'</span>, navigate)
+  lb.<span class="fn">addEventListener</span>(<span class="str">'click'</span>, select)
+<span class="tag">&lt;/script&gt;</span></pre>
+  </div>
+</div>
+
+<script>
+const combobox = document.getElementById('fruit-combobox');
+const listbox = document.getElementById('fruit-listbox');
+const valueDisplay = document.getElementById('combobox-value');
+const options = listbox.querySelectorAll('[role="option"]');
+let activeIndex = -1;
+let isOpen = true;
+
+function open() {
+  isOpen = true;
+  listbox.hidden = false;
+  combobox.setAttribute('aria-expanded', 'true');
+}
+
+function close() {
+  isOpen = false;
+  listbox.hidden = true;
+  combobox.setAttribute('aria-expanded', 'false');
+  combobox.removeAttribute('aria-activedescendant');
+}
+
+function setActive(index) {
+  if (activeIndex >= 0) options[activeIndex].setAttribute('aria-selected', 'false');
+  activeIndex = index;
+  if (activeIndex < 0) activeIndex = options.length - 1;
+  if (activeIndex >= options.length) activeIndex = 0;
+  options[activeIndex].setAttribute('aria-selected', 'true');
+  combobox.setAttribute('aria-activedescendant', options[activeIndex].id);
+  options[activeIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function select(index) {
+  const option = options[index];
+  const icon = option.querySelector('.option-icon').textContent;
+  const label = option.querySelector('.option-label').textContent;
+  valueDisplay.textContent = `${icon} ${label}`;
+  close();
+}
+
+combobox.addEventListener('click', () => { isOpen ? close() : open(); });
+
+combobox.addEventListener('keydown', (e) => {
+  switch (e.key) {
+    case 'ArrowDown': e.preventDefault(); if (!isOpen) open(); setActive(activeIndex + 1); break;
+    case 'ArrowUp':   e.preventDefault(); if (!isOpen) open(); setActive(activeIndex - 1); break;
+    case 'Enter': case ' ':
+      e.preventDefault();
+      if (!isOpen) open(); else if (activeIndex >= 0) select(activeIndex);
+      break;
+    case 'Escape': if (isOpen) { e.preventDefault(); close(); } break;
+    case 'Home': if (isOpen) { e.preventDefault(); setActive(0); } break;
+    case 'End':  if (isOpen) { e.preventDefault(); setActive(options.length - 1); } break;
+  }
+});
+
+listbox.addEventListener('click', (e) => {
+  const option = e.target.closest('[role="option"]');
+  if (option) { const i = Array.from(options).indexOf(option); setActive(i); select(i); }
+});
+
+document.addEventListener('click', (e) => { if (!e.target.closest('.combobox-wrapper')) close(); });
+</script>
+
+</body>
+</html>
