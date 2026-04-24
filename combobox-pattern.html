@@ -194,6 +194,38 @@
       font-size: 13px;
       color: #999;
     }
+
+    .section-heading.purple { background: #7c3aed; }
+    .code-header.freeform { background: #7c3aed; }
+
+    /* --- Freeform Editable Combobox --- */
+    .freeform-input:focus { outline: 2px solid #7c3aed; outline-offset: -1px; }
+    .freeform-option[aria-selected="true"] { background: #ede9fe; color: #7c3aed; }
+
+    .freeform-result {
+      margin-top: 16px;
+      padding: 10px 12px;
+      background: #f9f5ff;
+      border: 1px solid #e9d5ff;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #6b21a8;
+      min-height: 40px;
+    }
+    .freeform-result-label {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 4px;
+    }
+    .freeform-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      margin: 2px 4px 2px 0;
+      background: #7c3aed;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
@@ -242,14 +274,14 @@
         tabindex="0"
         aria-labelledby="fruit-label"
         aria-haspopup="listbox"
-        aria-expanded="true"
+        aria-expanded="false"
         aria-controls="fruit-listbox"
         class="combobox-trigger"
       >
         <span id="combobox-value">選択してください</span>
         <span class="arrow">▼</span>
       </div>
-      <ul id="fruit-listbox" role="listbox" aria-labelledby="fruit-label" class="combobox-listbox">
+      <ul id="fruit-listbox" role="listbox" aria-labelledby="fruit-label" class="combobox-listbox" hidden>
         <li role="option" id="opt-apple" class="combobox-option" aria-selected="false" data-value="apple">
           <span class="option-icon" style="background:#fde8e8">🍎</span>
           <span class="option-content"><span class="option-label">りんご</span><span class="option-desc">青森県産 / さっぱり甘い</span></span>
@@ -304,7 +336,7 @@
 </div>
 
 <!-- ==================== 3. Editable Combobox ==================== -->
-<div class="section-heading green">3. Editable Combobox（テキスト入力で絞り込み）</div>
+<div class="section-heading green">3. Editable Combobox — 制限付き（リストからのみ選択可）</div>
 <div class="row">
   <div class="row-demo">
     <div class="row-label">Sample</div>
@@ -316,14 +348,14 @@
         role="combobox"
         aria-labelledby="lang-label"
         aria-haspopup="listbox"
-        aria-expanded="true"
+        aria-expanded="false"
         aria-controls="lang-listbox"
         aria-autocomplete="list"
         class="editable-input"
         placeholder="言語を検索..."
         autocomplete="off"
       />
-      <ul id="lang-listbox" role="listbox" aria-labelledby="lang-label" class="editable-listbox">
+      <ul id="lang-listbox" role="listbox" aria-labelledby="lang-label" class="editable-listbox" hidden>
       </ul>
     </div>
     <p style="font-size:12px; color:#999; margin: 12px 0 0;">テキスト入力で候補を絞り込み、リストから選択する（DeepL の言語選択と同じパターン）</p>
@@ -358,13 +390,65 @@
   </div>
 </div>
 
+<!-- ==================== 4. Editable Combobox（任意入力） ==================== -->
+<div class="section-heading purple">4. Editable Combobox — 任意入力（候補にない値もOK）</div>
+<div class="row">
+  <div class="row-demo">
+    <div class="row-label">Sample</div>
+    <label id="skill-label" class="combobox-label">スキルを追加</label>
+    <div class="editable-wrapper" id="skill-wrapper">
+      <input
+        id="skill-combobox"
+        type="text"
+        role="combobox"
+        aria-labelledby="skill-label"
+        aria-haspopup="listbox"
+        aria-expanded="false"
+        aria-controls="skill-listbox"
+        aria-autocomplete="list"
+        class="editable-input freeform-input"
+        placeholder="スキルを入力（例: React）..."
+        autocomplete="off"
+      />
+      <ul id="skill-listbox" role="listbox" aria-labelledby="skill-label" class="editable-listbox" hidden>
+      </ul>
+    </div>
+    <div class="freeform-result-label">確定済みの値:</div>
+    <div class="freeform-result" id="skill-result">（Enter で確定）</div>
+    <p style="font-size:12px; color:#999; margin: 12px 0 0;">候補から選んでも、候補にない値を直接入力してもOK。入力した値がそのまま確定する</p>
+  </div>
+  <div class="row-code">
+    <div class="code-header freeform">実装イメージ</div>
+    <pre><span class="cmt">&lt;!-- 制限付きとの違い: Enter で入力値がそのまま確定 --&gt;</span>
+
+<span class="tag">&lt;input</span>
+  <span class="attr">role</span>=<span class="val">"combobox"</span>
+  <span class="attr">aria-autocomplete</span>=<span class="val">"list"</span>
+<span class="tag">/&gt;</span>
+
+<span class="tag">&lt;script&gt;</span>
+  input.<span class="fn">addEventListener</span>(<span class="str">'keydown'</span>, (e) =&gt; {
+    <span class="kw">if</span> (e.key === <span class="str">'Enter'</span>) {
+      <span class="kw">if</span> (highlightedOption) {
+        <span class="cmt">// 候補を選んだ → その値を使う</span>
+        <span class="fn">confirm</span>(highlightedOption.text)
+      } <span class="kw">else</span> {
+        <span class="cmt">// 候補を選んでない → 入力値をそのまま使う</span>
+        <span class="fn">confirm</span>(input.value)
+      }
+    }
+  })
+<span class="tag">&lt;/script&gt;</span></pre>
+  </div>
+</div>
+
 <script>
 const combobox = document.getElementById('fruit-combobox');
 const listbox = document.getElementById('fruit-listbox');
 const valueDisplay = document.getElementById('combobox-value');
 const options = listbox.querySelectorAll('[role="option"]');
 let activeIndex = -1;
-let isOpen = true;
+let isOpen = false;
 
 function open() {
   isOpen = true;
@@ -430,7 +514,7 @@ const languages = [
   'インドネシア語', 'オランダ語', 'ポーランド語', 'スウェーデン語'
 ];
 let edActiveIndex = -1;
-let edIsOpen = true;
+let edIsOpen = false;
 
 function edRender(items, query) {
   langListbox.innerHTML = '';
@@ -540,10 +624,137 @@ langListbox.addEventListener('click', (e) => {
   }
 });
 
-document.addEventListener('click', (e) => { if (!e.target.closest('.editable-wrapper')) edClose(); });
+document.addEventListener('click', (e) => { if (!e.target.closest('.editable-wrapper') && !e.target.closest('#skill-wrapper')) edClose(); });
 
-// 初期表示
-edRender(languages, '');
+// ==================== 4. Editable Combobox（任意入力） ====================
+const skillInput = document.getElementById('skill-combobox');
+const skillListbox = document.getElementById('skill-listbox');
+const skillResult = document.getElementById('skill-result');
+const skillSuggestions = [
+  'React', 'TypeScript', 'Next.js', 'Vue.js', 'Angular',
+  'Node.js', 'Python', 'Ruby', 'Go', 'Rust',
+  'CSS', 'HTML', 'GraphQL', 'Docker', 'AWS'
+];
+let skActiveIndex = -1;
+let skIsOpen = false;
+const confirmedSkills = [];
+
+function skRender(items, query) {
+  skillListbox.innerHTML = '';
+  if (items.length === 0) {
+    skillListbox.hidden = true;
+    skillInput.setAttribute('aria-expanded', 'false');
+    return;
+  }
+  items.forEach((skill, i) => {
+    const li = document.createElement('li');
+    li.role = 'option';
+    li.id = `skill-opt-${i}`;
+    li.className = 'editable-option freeform-option';
+    li.setAttribute('aria-selected', 'false');
+    if (query) {
+      const idx = skill.toLowerCase().indexOf(query.toLowerCase());
+      if (idx >= 0) {
+        li.innerHTML = skill.slice(0, idx)
+          + '<span class="match">' + skill.slice(idx, idx + query.length) + '</span>'
+          + skill.slice(idx + query.length);
+      } else {
+        li.textContent = skill;
+      }
+    } else {
+      li.textContent = skill;
+    }
+    skillListbox.appendChild(li);
+  });
+  skActiveIndex = -1;
+}
+
+function skOpen(items, query) {
+  skIsOpen = true;
+  skRender(items, query);
+  if (items.length > 0) {
+    skillListbox.hidden = false;
+    skillInput.setAttribute('aria-expanded', 'true');
+  }
+}
+
+function skClose() {
+  skIsOpen = false;
+  skillListbox.hidden = true;
+  skillInput.setAttribute('aria-expanded', 'false');
+  skillInput.removeAttribute('aria-activedescendant');
+  skActiveIndex = -1;
+}
+
+function skSetActive(index) {
+  const opts = skillListbox.querySelectorAll('[role="option"]');
+  if (opts.length === 0) return;
+  if (skActiveIndex >= 0 && skActiveIndex < opts.length) opts[skActiveIndex].setAttribute('aria-selected', 'false');
+  skActiveIndex = index;
+  if (skActiveIndex < 0) skActiveIndex = opts.length - 1;
+  if (skActiveIndex >= opts.length) skActiveIndex = 0;
+  opts[skActiveIndex].setAttribute('aria-selected', 'true');
+  skillInput.setAttribute('aria-activedescendant', opts[skActiveIndex].id);
+  opts[skActiveIndex].scrollIntoView({ block: 'nearest' });
+}
+
+function skConfirm(value) {
+  const trimmed = value.trim();
+  if (!trimmed || confirmedSkills.includes(trimmed)) return;
+  confirmedSkills.push(trimmed);
+  skillResult.innerHTML = confirmedSkills.map(s => `<span class="freeform-tag">${s}</span>`).join('');
+  skillInput.value = '';
+  skClose();
+}
+
+function skFilter() {
+  const q = skillInput.value.trim();
+  return q
+    ? skillSuggestions.filter(s => s.toLowerCase().includes(q.toLowerCase()) && !confirmedSkills.includes(s))
+    : skillSuggestions.filter(s => !confirmedSkills.includes(s));
+}
+
+skillInput.addEventListener('input', () => {
+  const matched = skFilter();
+  skOpen(matched, skillInput.value);
+});
+
+skillInput.addEventListener('focus', () => {
+  if (!skIsOpen) skOpen(skFilter(), skillInput.value);
+});
+
+skillInput.addEventListener('keydown', (e) => {
+  switch (e.key) {
+    case 'ArrowDown':
+      e.preventDefault();
+      if (!skIsOpen) skOpen(skFilter(), skillInput.value);
+      skSetActive(skActiveIndex + 1);
+      break;
+    case 'ArrowUp':
+      e.preventDefault();
+      if (skIsOpen) skSetActive(skActiveIndex - 1);
+      break;
+    case 'Enter':
+      e.preventDefault();
+      if (skIsOpen && skActiveIndex >= 0) {
+        const opts = skillListbox.querySelectorAll('[role="option"]');
+        skConfirm(opts[skActiveIndex].textContent);
+      } else {
+        skConfirm(skillInput.value);
+      }
+      break;
+    case 'Escape':
+      if (skIsOpen) { e.preventDefault(); skClose(); }
+      break;
+  }
+});
+
+skillListbox.addEventListener('click', (e) => {
+  const opt = e.target.closest('[role="option"]');
+  if (opt) skConfirm(opt.textContent);
+});
+
+document.addEventListener('click', (e) => { if (!e.target.closest('#skill-wrapper')) skClose(); });
 </script>
 
 </body>
