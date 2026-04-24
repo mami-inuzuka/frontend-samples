@@ -226,12 +226,38 @@
       border-radius: 4px;
       font-size: 12px;
     }
+
+    /* --- ネイティブ select multiple --- */
+    .section-heading.gray-dark { background: #333; }
+    .code-header.multi { background: #333; }
+
+    .native-select-multiple {
+      width: 100%;
+      max-width: 280px;
+      font-size: 16px;
+    }
+
+    .multi-result {
+      margin-top: 12px;
+      padding: 10px 12px;
+      background: #f5f5f5;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 13px;
+      color: #333;
+      min-height: 40px;
+    }
+    .multi-result-label {
+      font-size: 11px;
+      color: #999;
+      margin-bottom: 4px;
+    }
   </style>
 </head>
 <body>
 
 <h1>Combobox パターン サンプル</h1>
-<div class="subtitle">ネイティブ &lt;select&gt; / Select-only Combobox / Editable Combobox の比較</div>
+<div class="subtitle">ネイティブ &lt;select&gt; / &lt;select multiple&gt; / Select-only Combobox / Editable Combobox の比較</div>
 
 <!-- ==================== 1. ネイティブ select ==================== -->
 <div class="section-heading">1. ネイティブ &lt;select&gt; + CSS</div>
@@ -261,8 +287,56 @@
   </div>
 </div>
 
-<!-- ==================== 2. Select-only Combobox ==================== -->
-<div class="section-heading blue">2. Select-only Combobox</div>
+<!-- ==================== 2. ネイティブ select multiple ==================== -->
+<div class="section-heading gray-dark">2. ネイティブ &lt;select multiple&gt;</div>
+<div class="row">
+  <div class="row-demo">
+    <div class="row-label">Sample</div>
+    <label for="multi-select" class="combobox-label">果物を選択（複数可）</label>
+    <select id="multi-select" class="native-select-multiple" multiple>
+      <option value="apple">🍎 りんご</option>
+      <option value="orange">🍊 みかん</option>
+      <option value="grape">🍇 ぶどう</option>
+      <option value="banana">🍌 バナナ</option>
+      <option value="strawberry">🍓 いちご</option>
+      <option value="peach">🍑 もも</option>
+      <option value="melon">🍈 メロン</option>
+      <option value="watermelon">🍉 すいか</option>
+    </select>
+    <div class="multi-result-label">選択中:</div>
+    <div class="multi-result" id="multi-result">（Cmd/Ctrl + クリックで複数選択）</div>
+    <p style="font-size:12px; color:#999; margin: 12px 0 0;">HTML 標準の複数選択。ドロップダウンではなくリストボックス形式で表示される</p>
+  </div>
+  <div class="row-code">
+    <div class="code-header multi">実装イメージ</div>
+    <pre><span class="cmt">&lt;!-- multiple 属性を追加するだけ --&gt;</span>
+
+<span class="tag">&lt;select</span> <span class="attr">multiple</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;option&gt;</span>りんご<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;option&gt;</span>みかん<span class="tag">&lt;/option&gt;</span>
+  <span class="tag">&lt;option&gt;</span>ぶどう<span class="tag">&lt;/option&gt;</span>
+<span class="tag">&lt;/select&gt;</span>
+
+<span class="cmt">&lt;!-- JS 不要（選択自体はブラウザが処理） --&gt;</span>
+<span class="cmt">&lt;!-- Cmd/Ctrl + クリックで複数選択 --&gt;</span>
+<span class="cmt">&lt;!-- 見た目はドロップダウンではなく --&gt;</span>
+<span class="cmt">&lt;!-- リストボックス形式になる --&gt;</span>
+
+<span class="cmt">/* --- データの取得 --- */</span>
+
+<span class="cmt">// フォーム送信時:</span>
+<span class="cmt">// fruits=apple&amp;fruits=grape</span>
+
+<span class="cmt">// JS で取得する場合:</span>
+<span class="kw">const</span> selected = Array.<span class="fn">from</span>(
+  select.selectedOptions
+).<span class="fn">map</span>(o =&gt; o.value)
+<span class="cmt">// → ["apple", "grape"]</span></pre>
+  </div>
+</div>
+
+<!-- ==================== 3. Select-only Combobox ==================== -->
+<div class="section-heading blue">3. Select-only Combobox</div>
 <div class="row">
   <div class="row-demo">
     <div class="row-label">Sample</div>
@@ -336,7 +410,7 @@
 </div>
 
 <!-- ==================== 3. Editable Combobox ==================== -->
-<div class="section-heading green">3. Editable Combobox — 制限付き（リストからのみ選択可）</div>
+<div class="section-heading green">4. Editable Combobox — 制限付き（リストからのみ選択可）</div>
 <div class="row">
   <div class="row-demo">
     <div class="row-label">Sample</div>
@@ -391,7 +465,7 @@
 </div>
 
 <!-- ==================== 4. Editable Combobox（任意入力） ==================== -->
-<div class="section-heading purple">4. Editable Combobox — 任意入力（候補にない値もOK）</div>
+<div class="section-heading purple">5. Editable Combobox — 任意入力（候補にない値もOK）</div>
 <div class="row">
   <div class="row-demo">
     <div class="row-label">Sample</div>
@@ -504,7 +578,15 @@ listbox.addEventListener('click', (e) => {
 
 document.addEventListener('click', (e) => { if (!e.target.closest('.combobox-wrapper')) close(); });
 
-// ==================== 3. Editable Combobox ====================
+// ==================== 2. Select multiple ====================
+const multiSelect = document.getElementById('multi-select');
+const multiResult = document.getElementById('multi-result');
+multiSelect.addEventListener('change', () => {
+  const selected = Array.from(multiSelect.selectedOptions).map(o => o.textContent);
+  multiResult.textContent = selected.length > 0 ? selected.join('、') : '（Cmd/Ctrl + クリックで複数選択）';
+});
+
+// ==================== 4. Editable Combobox ====================
 const langInput = document.getElementById('lang-combobox');
 const langListbox = document.getElementById('lang-listbox');
 const languages = [
