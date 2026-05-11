@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>CSS Anchor Positioning のサンプル</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 32px 80px;
+    background: #f5f5f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    color: #1f1f1f;
+    line-height: 1.6;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+  }
+  .subtitle {
+    margin: 0 0 12px;
+    color: #666;
+    font-size: 15px;
+  }
+  .browser-note {
+    margin: 0 0 40px;
+    padding: 10px 14px;
+    background: #fff3e0;
+    border: 1px solid #ffcc80;
+    border-radius: 6px;
+    color: #6d4c41;
+    font-size: 13px;
+  }
+  .section { margin-bottom: 48px; }
+  .section-label {
+    display: inline-block;
+    padding: 4px 12px;
+    margin-bottom: 16px;
+    background: #1f1f1f;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+  }
+  .section-desc {
+    margin: 0 0 16px;
+    color: #555;
+    font-size: 14px;
+  }
+  .row {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .panel {
+    flex: 1;
+    min-width: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-header {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  /* Sample panel */
+  .sample {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+  }
+  .sample .panel-header {
+    background: #fafafa;
+    border-bottom: 1px solid #e0e0e0;
+    color: #666;
+  }
+  .sample-body {
+    padding: 32px 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    min-height: 280px;
+  }
+  .sample-note {
+    padding: 10px 16px;
+    background: #fafafa;
+    border-top: 1px solid #e0e0e0;
+    color: #666;
+    font-size: 13px;
+    text-align: center;
+  }
+  /* Code panel */
+  .code {
+    background: #1e1e1e;
+    color: #d4d4d4;
+  }
+  .code .panel-header {
+    background: #252526;
+    color: #cccccc;
+    border-bottom: 1px solid #333;
+  }
+  pre {
+    margin: 0;
+    padding: 20px 24px;
+    font-family: "SF Mono", Monaco, Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    overflow-x: auto;
+    flex: 1;
+  }
+  .tag { color: #569cd6; }
+  .attr { color: #9cdcfe; }
+  .val { color: #ce9178; }
+  .comment { color: #6a9955; }
+  .key { color: #c586c0; }
+  .fn { color: #dcdcaa; }
+  .prop { color: #9cdcfe; }
+  .num { color: #b5cea8; }
+
+  /* Demo controls */
+  .demo-btn {
+    appearance: none;
+    border: 1px solid #1f1f1f;
+    background: #1f1f1f;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .demo-btn:hover { background: #333; border-color: #333; }
+  .demo-btn.secondary {
+    background: #fff;
+    color: #1f1f1f;
+  }
+  .demo-btn.secondary:hover { background: #f0f0f0; }
+
+  .toggle-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .toggle-btn {
+    appearance: none;
+    border: 1px solid #d0d0d0;
+    background: #fff;
+    color: #555;
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .toggle-btn.active {
+    background: #1f1f1f;
+    border-color: #1f1f1f;
+    color: #fff;
+  }
+
+  /* ============================================
+   * Section 1: 基本
+   * ============================================ */
+  .demo1-stage {
+    width: 100%;
+    height: 200px;
+    position: relative;
+    display: flex;
+    padding: 0 16px;
+  }
+  .demo1-stage[data-align="left"] { justify-content: flex-start; }
+  .demo1-stage[data-align="center"] { justify-content: center; }
+  .demo1-stage[data-align="right"] { justify-content: flex-end; }
+
+  .demo1-anchor {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background: #1976d2;
+    color: #fff;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: default;
+    anchor-name: --demo1-anchor;
+    transition: all 0.3s ease;
+  }
+  .demo1-follower {
+    position: absolute;
+    /* div の上端 = ボタンの下端 */
+    top: anchor(--demo1-anchor bottom);
+    /* div の左端 = ボタンの左端 */
+    left: anchor(--demo1-anchor left);
+    padding: 8px 16px;
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 6px;
+    color: #e65100;
+    font-size: 13px;
+    transition: all 0.3s ease;
+  }
+
+  /* ============================================
+   * Section 2: ずらし方の組み合わせ
+   * ============================================ */
+  .demo2-stage {
+    width: 100%;
+    height: 200px;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding: 0 16px;
+  }
+  .demo2-anchor {
+    align-self: flex-start;
+    padding: 10px 20px;
+    background: #1976d2;
+    color: #fff;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: default;
+    anchor-name: --demo2-anchor;
+  }
+
+  /* mode: naive — anchor() のみ */
+  .demo2-stage[data-mode="naive"] .demo2-follower {
+    position: absolute;
+    top: anchor(--demo2-anchor bottom);
+    left: anchor(--demo2-anchor center);
+    /* transform なし */
+  }
+
+  /* mode: polished — calc で間隔 + transform で中央寄せ */
+  .demo2-stage[data-mode="polished"] .demo2-follower {
+    position: absolute;
+    top: calc(anchor(--demo2-anchor bottom) + 12px);
+    left: anchor(--demo2-anchor center);
+    transform: translateX(-50%);
+  }
+
+  .demo2-follower {
+    padding: 8px 16px;
+    background: #fff3e0;
+    border: 1px solid #ffb74d;
+    border-radius: 6px;
+    color: #e65100;
+    font-size: 13px;
+    transition: all 0.3s ease;
+  }
+
+  .fallback-note {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: #ffebee;
+    border: 1px solid #ef9a9a;
+    border-radius: 6px;
+    color: #c62828;
+    font-size: 13px;
+    text-align: center;
+    display: none;
+  }
+  body.no-anchor-support .fallback-note { display: block; }
+
+  @media (max-width: 900px) {
+    .row { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<h1>CSS Anchor Positioning のサンプル</h1>
+<p class="subtitle">anchor-name でアンカーを定義し、anchor() で別の要素から位置を参照する</p>
+<p class="browser-note">⚠️ このページは Anchor Positioning（Baseline 2026-01）を使用しています。最新の Chrome / Edge / Safari / Firefox で動作します。古いブラウザでは正しく表示されません。</p>
+
+<!-- =================================================================== -->
+<!-- Section 1: 基本 -->
+<!-- =================================================================== -->
+<section class="section">
+  <span class="section-label">1. 基本: アンカーに張り付ける</span>
+  <p class="section-desc">兄弟関係（親子ではない）の 2 要素で、片方を <code>anchor-name</code> で名指しできるアンカーにし、もう片方が <code>anchor()</code> で位置を参照する。</p>
+
+  <div class="row">
+    <div class="panel sample">
+      <div class="panel-header">Sample</div>
+      <div class="sample-body">
+        <div class="toggle-row">
+          <button class="toggle-btn" data-align="left">左寄せ</button>
+          <button class="toggle-btn active" data-align="center">中央</button>
+          <button class="toggle-btn" data-align="right">右寄せ</button>
+        </div>
+        <div class="demo1-stage" id="demo1-stage" data-align="center">
+          <button class="demo1-anchor">🔵 ボタン（anchor）</button>
+          <div class="demo1-follower">🟠 div（follower）</div>
+        </div>
+      </div>
+      <div class="sample-note">ボタンが動くと、follower の div も<strong>自動的についていく</strong>。DOM 上は兄弟関係。</div>
+    </div>
+    <div class="panel code">
+      <div class="panel-header">実装イメージ</div>
+<pre><span class="comment">/* HTML: 兄弟関係 (親子ではない) */</span>
+<span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="val">"anchor"</span><span class="tag">&gt;</span>ボタン<span class="tag">&lt;/button&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"follower"</span><span class="tag">&gt;</span>div<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">/* ボタン側: 名前を付ける */</span>
+.anchor {
+  <span class="prop">anchor-name</span>: --my-anchor;
+}
+
+<span class="comment">/* div 側: 名前で参照 */</span>
+.follower {
+  <span class="prop">position</span>: absolute;
+  <span class="comment">/* div の上端 = ボタンの下端 */</span>
+  <span class="prop">top</span>: <span class="fn">anchor</span>(--my-anchor bottom);
+  <span class="comment">/* div の左端 = ボタンの左端 */</span>
+  <span class="prop">left</span>: <span class="fn">anchor</span>(--my-anchor left);
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<!-- Section 2: ずらし方 -->
+<!-- =================================================================== -->
+<section class="section">
+  <span class="section-label">2. ずらし方の組み合わせ</span>
+  <p class="section-desc"><code>anchor()</code> 単体だとピタリ張り付くだけ。<code>calc()</code> で間隔を足し、<code>transform: translate()</code> で中央寄せを足すと「ボタンの真下、12px 離して中央配置」が作れる。</p>
+
+  <div class="row">
+    <div class="panel sample">
+      <div class="panel-header">Sample</div>
+      <div class="sample-body">
+        <div class="toggle-row">
+          <button class="toggle-btn" data-mode="naive">素朴 (anchor() のみ)</button>
+          <button class="toggle-btn active" data-mode="polished">完成形 (+ calc + transform)</button>
+        </div>
+        <div class="demo2-stage" id="demo2-stage" data-mode="polished">
+          <button class="demo2-anchor">🔵 ボタン（anchor）</button>
+          <div class="demo2-follower">🟠 div（follower）</div>
+        </div>
+      </div>
+      <div class="sample-note">「素朴」だと div の左端がボタンの中央に来てしまう。<code>translateX(-50%)</code> で自分の幅の半分左にずらして中央揃え。</div>
+    </div>
+    <div class="panel code">
+      <div class="panel-header">実装イメージ</div>
+<pre><span class="comment">/* 素朴: anchor() だけ */</span>
+.follower {
+  <span class="prop">position</span>: absolute;
+  <span class="prop">top</span>:  <span class="fn">anchor</span>(--my-anchor bottom);
+  <span class="prop">left</span>: <span class="fn">anchor</span>(--my-anchor center);
+  <span class="comment">/* ← div の左端が center に来てしまう */</span>
+}
+
+<span class="comment">/* 完成形: calc + transform */</span>
+.follower {
+  <span class="prop">position</span>: absolute;
+  <span class="comment">/* (1) 12px 下に離す */</span>
+  <span class="prop">top</span>:  <span class="fn">calc</span>(<span class="fn">anchor</span>(--my-anchor bottom) + <span class="num">12px</span>);
+  <span class="prop">left</span>: <span class="fn">anchor</span>(--my-anchor center);
+  <span class="comment">/* (2) 自分の幅の半分だけ左に */</span>
+  <span class="prop">transform</span>: <span class="fn">translateX</span>(<span class="num">-50%</span>);
+}</pre>
+    </div>
+  </div>
+  <div class="fallback-note">
+    お使いのブラウザは Anchor Positioning に対応していないようです。Chrome / Edge / Safari / Firefox の最新版でご覧ください。
+  </div>
+</section>
+
+<script>
+  // Section 1: ボタンの位置を切り替え
+  const demo1Stage = document.getElementById("demo1-stage");
+  document.querySelectorAll("[data-align]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-align]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      demo1Stage.dataset.align = btn.dataset.align;
+    });
+  });
+
+  // Section 2: 素朴 / 完成形を切り替え
+  const demo2Stage = document.getElementById("demo2-stage");
+  document.querySelectorAll("[data-mode]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("[data-mode]").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      demo2Stage.dataset.mode = btn.dataset.mode;
+    });
+  });
+
+  // ブラウザサポート検出 (anchor-name プロパティがあるか)
+  if (!CSS.supports("anchor-name", "--test")) {
+    document.body.classList.add("no-anchor-support");
+  }
+</script>
+
+</body>
+</html>
