@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Popover API のサンプル</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 32px 80px;
+    background: #f5f5f5;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Hiragino Sans", "Yu Gothic UI", sans-serif;
+    color: #1f1f1f;
+    line-height: 1.6;
+  }
+  h1 {
+    margin: 0 0 8px;
+    font-size: 28px;
+  }
+  .subtitle {
+    margin: 0 0 40px;
+    color: #666;
+    font-size: 15px;
+  }
+  .section { margin-bottom: 48px; }
+  .section-label {
+    display: inline-block;
+    padding: 4px 12px;
+    margin-bottom: 16px;
+    background: #1f1f1f;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 999px;
+    letter-spacing: 0.04em;
+  }
+  .section-desc {
+    margin: 0 0 16px;
+    color: #555;
+    font-size: 14px;
+  }
+  .row {
+    display: flex;
+    gap: 20px;
+    align-items: stretch;
+  }
+  .panel {
+    flex: 1;
+    min-width: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+  .panel-header {
+    padding: 10px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  /* Sample panel */
+  .sample {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+  }
+  .sample .panel-header {
+    background: #fafafa;
+    border-bottom: 1px solid #e0e0e0;
+    color: #666;
+  }
+  .sample-body {
+    padding: 32px 24px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+  }
+  .sample-note {
+    padding: 10px 16px;
+    background: #fafafa;
+    border-top: 1px solid #e0e0e0;
+    color: #666;
+    font-size: 13px;
+    text-align: center;
+  }
+  /* Code panel */
+  .code {
+    background: #1e1e1e;
+    color: #d4d4d4;
+  }
+  .code .panel-header {
+    background: #252526;
+    color: #cccccc;
+    border-bottom: 1px solid #333;
+  }
+  pre {
+    margin: 0;
+    padding: 20px 24px;
+    font-family: "SF Mono", Monaco, Menlo, Consolas, monospace;
+    font-size: 13px;
+    line-height: 1.65;
+    overflow-x: auto;
+    flex: 1;
+  }
+  .tag { color: #569cd6; }
+  .attr { color: #9cdcfe; }
+  .val { color: #ce9178; }
+  .comment { color: #6a9955; }
+  .key { color: #c586c0; }
+  .fn { color: #dcdcaa; }
+  .str { color: #ce9178; }
+
+  /* Demo controls */
+  button.demo-btn {
+    appearance: none;
+    border: 1px solid #1f1f1f;
+    background: #1f1f1f;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  button.demo-btn:hover { background: #333; border-color: #333; }
+  button.demo-btn.secondary {
+    background: #fff;
+    color: #1f1f1f;
+  }
+  button.demo-btn.secondary:hover { background: #f0f0f0; }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  /* Popover content styling (all popovers in this page) */
+  [popover] {
+    margin: 0;
+    padding: 16px 20px;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    color: #1f1f1f;
+    max-width: 280px;
+  }
+  [popover]::backdrop {
+    background: rgba(0, 0, 0, 0.06);
+  }
+
+  /* Section 3: top layer demo */
+  .clipped-container {
+    position: relative;
+    width: 220px;
+    height: 140px;
+    padding: 12px;
+    border: 2px dashed #c0c0c0;
+    background: #f9f9f9;
+    overflow: hidden;
+    border-radius: 8px;
+  }
+  .clipped-container.with-transform {
+    transform: translateZ(0);
+  }
+  .clipped-label {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 8px;
+    font-family: "SF Mono", Monaco, Menlo, monospace;
+  }
+  /* 通常の absolute div: 祖先の overflow:hidden で clip される */
+  .normal-popup {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 8px;
+    padding: 16px 20px;
+    background: #fff;
+    border: 1px solid #d0d0d0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    font-size: 14px;
+    max-width: 220px;
+    z-index: 999;
+    display: none;
+  }
+  .normal-popup.show { display: block; }
+
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    width: 100%;
+  }
+  .compare-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+  .compare-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1f1f1f;
+  }
+
+  .legend {
+    margin-top: 12px;
+    padding: 12px;
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-radius: 6px;
+    font-size: 13px;
+    color: #5d4037;
+    width: 100%;
+  }
+
+  @media (max-width: 900px) {
+    .row { flex-direction: column; }
+    .compare-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Popover API のサンプル</h1>
+<p class="subtitle">popover 属性 / popovertarget 属性 / top layer の挙動を体感するデモ</p>
+
+<!-- =================================================================== -->
+<!-- Section 1: 基本 (popover="auto") -->
+<!-- =================================================================== -->
+<section class="section">
+  <span class="section-label">1. 基本: popover="auto"</span>
+  <p class="section-desc">最小コード。HTML 属性だけで開閉・Esc・外側クリックでの自動クローズが動く。</p>
+
+  <div class="row">
+    <div class="panel sample">
+      <div class="panel-header">Sample</div>
+      <div class="sample-body">
+        <button class="demo-btn" popovertarget="popover-basic">開く</button>
+        <div id="popover-basic" popover>
+          <strong>これが popover の中身</strong><br>
+          外側クリック / Esc キーで閉じる
+        </div>
+      </div>
+      <div class="sample-note">同時に 1 つしか開けない（auto モード）。Esc キーでも閉じる。</div>
+    </div>
+    <div class="panel code">
+      <div class="panel-header">実装イメージ</div>
+<pre><span class="comment">&lt;!-- popovertarget で対応付けるだけ --&gt;</span>
+<span class="tag">&lt;button</span> <span class="attr">popovertarget</span>=<span class="val">"my-popover"</span><span class="tag">&gt;</span>開く<span class="tag">&lt;/button&gt;</span>
+
+<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="val">"my-popover"</span> <span class="attr">popover</span><span class="tag">&gt;</span>
+  これが popover の中身
+<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">/* JS は一切不要 */</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<!-- Section 2: auto vs manual -->
+<!-- =================================================================== -->
+<section class="section">
+  <span class="section-label">2. auto vs manual</span>
+  <p class="section-desc">popover 属性のモードによって閉じ方が変わる。manual は自前で閉じない限り開いたまま。</p>
+
+  <div class="row">
+    <div class="panel sample">
+      <div class="panel-header">Sample</div>
+      <div class="sample-body">
+        <div class="btn-row">
+          <button class="demo-btn" popovertarget="popover-auto">auto を開く</button>
+          <button class="demo-btn secondary" id="manual-open-btn">manual を開く</button>
+          <button class="demo-btn secondary" id="manual-close-btn">manual を閉じる</button>
+        </div>
+
+        <div id="popover-auto" popover="auto" style="top: 120px; left: 50px;">
+          <strong>popover="auto"</strong><br>
+          外側クリックや Esc で<u>自動で閉じる</u>。<br>
+          別の auto を開くとこっちは閉じる。
+        </div>
+
+        <div id="popover-manual" popover="manual" style="top: 120px; right: 50px; left: auto;">
+          <strong>popover="manual"</strong><br>
+          外側クリックや Esc では<u>閉じない</u>。<br>
+          「閉じる」ボタンで自前で hide が必要。
+        </div>
+      </div>
+      <div class="sample-note">両方開いて、外側クリック・Esc キーを試してみてください。manual だけ残ります。</div>
+    </div>
+    <div class="panel code">
+      <div class="panel-header">実装イメージ</div>
+<pre><span class="comment">/* auto: ブラウザが面倒見てくれる */</span>
+<span class="tag">&lt;div</span> <span class="attr">popover</span>=<span class="val">"auto"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+
+<span class="comment">/* manual: 自前で開閉する */</span>
+<span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="val">"m"</span> <span class="attr">popover</span>=<span class="val">"manual"</span><span class="tag">&gt;</span>...<span class="tag">&lt;/div&gt;</span>
+
+<span class="tag">&lt;script&gt;</span>
+  <span class="key">const</span> el = <span class="fn">document</span>.<span class="fn">getElementById</span>(<span class="str">"m"</span>);
+  el.<span class="fn">showPopover</span>();   <span class="comment">// 開く</span>
+  el.<span class="fn">hidePopover</span>();   <span class="comment">// 閉じる</span>
+  el.<span class="fn">togglePopover</span>(); <span class="comment">// トグル</span>
+<span class="tag">&lt;/script&gt;</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- =================================================================== -->
+<!-- Section 3: top layer の威力 -->
+<!-- =================================================================== -->
+<section class="section">
+  <span class="section-label">3. top layer の威力</span>
+  <p class="section-desc">祖先に <code>overflow: hidden</code> や <code>transform</code> があっても、popover は top layer に出るため clip されない。</p>
+
+  <div class="row">
+    <div class="panel sample">
+      <div class="panel-header">Sample</div>
+      <div class="sample-body">
+        <div class="compare-grid">
+          <!-- Left: 通常の position: absolute -->
+          <div class="compare-cell">
+            <div class="compare-title">❌ 通常の position: absolute</div>
+            <div class="clipped-container with-transform">
+              <div class="clipped-label">overflow: hidden + transform</div>
+              <button class="demo-btn secondary" id="normal-btn">開く</button>
+              <div class="normal-popup" id="normal-popup">
+                これは普通の div。<br>
+                祖先の <code>overflow: hidden</code> で<br>
+                <strong>clip されてしまう</strong>。
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: Popover API -->
+          <div class="compare-cell">
+            <div class="compare-title">✅ Popover API (top layer)</div>
+            <div class="clipped-container with-transform">
+              <div class="clipped-label">overflow: hidden + transform</div>
+              <button class="demo-btn" popovertarget="popover-toplayer">開く</button>
+              <div id="popover-toplayer" popover>
+                top layer に出るので<br>
+                祖先の overflow を<br>
+                <strong>貫通して表示される</strong>！
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="legend">
+          両方とも「overflow: hidden + transform」の枠の中にあります。左は枠で切られてしまいますが、右は枠を貫通して全体が表示されます。
+        </div>
+      </div>
+      <div class="sample-note">DevTools で popover 要素を選択 → Elements の <code>&lt;/html&gt;</code> 直前に <code>#top-layer</code> が出現するのが確認できます。</div>
+    </div>
+    <div class="panel code">
+      <div class="panel-header">実装イメージ</div>
+<pre><span class="comment">&lt;!-- 祖先に overflow:hidden があっても --&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">style</span>=<span class="val">"overflow: hidden;</span>
+            <span class="val">transform: translateZ(0);"</span><span class="tag">&gt;</span>
+
+  <span class="tag">&lt;button</span> <span class="attr">popovertarget</span>=<span class="val">"p"</span><span class="tag">&gt;</span>開く<span class="tag">&lt;/button&gt;</span>
+
+  <span class="comment">&lt;!-- DOM はこの中にあるけど --&gt;</span>
+  <span class="comment">&lt;!-- 描画は top layer に飛ぶ --&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">id</span>=<span class="val">"p"</span> <span class="attr">popover</span><span class="tag">&gt;</span>
+    clip されない！
+  <span class="tag">&lt;/div&gt;</span>
+
+<span class="tag">&lt;/div&gt;</span></pre>
+    </div>
+  </div>
+</section>
+
+<script>
+  // Section 2: manual popover の開閉
+  const manualPopover = document.getElementById("popover-manual");
+  document.getElementById("manual-open-btn").addEventListener("click", () => {
+    try { manualPopover.showPopover(); } catch (e) { /* already open */ }
+  });
+  document.getElementById("manual-close-btn").addEventListener("click", () => {
+    try { manualPopover.hidePopover(); } catch (e) { /* already closed */ }
+  });
+
+  // Section 3: 通常の div を開閉（比較用）
+  const normalBtn = document.getElementById("normal-btn");
+  const normalPopup = document.getElementById("normal-popup");
+  normalBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    normalPopup.classList.toggle("show");
+  });
+  document.addEventListener("click", (e) => {
+    if (!normalPopup.contains(e.target) && e.target !== normalBtn) {
+      normalPopup.classList.remove("show");
+    }
+  });
+</script>
+
+</body>
+</html>
