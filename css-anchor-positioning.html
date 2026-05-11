@@ -271,6 +271,14 @@
   }
   body.no-anchor-support .fallback-note { display: block; }
 
+  .sample-note code {
+    padding: 1px 6px;
+    background: rgba(0, 0, 0, 0.06);
+    border-radius: 3px;
+    font-size: 0.92em;
+    font-family: "SF Mono", Monaco, Menlo, monospace;
+  }
+
   @media (max-width: 900px) {
     .row { flex-direction: column; }
   }
@@ -303,27 +311,38 @@
           <div class="demo1-follower">🟠 div（follower）</div>
         </div>
       </div>
-      <div class="sample-note">ボタンが動くと、follower の div も<strong>自動的についていく</strong>。DOM 上は兄弟関係。</div>
+      <div class="sample-note">ボタンの位置は Flexbox の <code>justify-content</code> を切り替えているだけ。follower は <code>anchor()</code> で自動的に追従する。</div>
     </div>
     <div class="panel code">
       <div class="panel-header">実装イメージ</div>
 <pre><span class="comment">/* HTML: 兄弟関係 (親子ではない) */</span>
-<span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="val">"anchor"</span><span class="tag">&gt;</span>ボタン<span class="tag">&lt;/button&gt;</span>
-<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"follower"</span><span class="tag">&gt;</span>div<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"stage"</span> <span class="attr">data-align</span>=<span class="val">"center"</span><span class="tag">&gt;</span>
+  <span class="tag">&lt;button</span> <span class="attr">class</span>=<span class="val">"anchor"</span><span class="tag">&gt;</span>ボタン<span class="tag">&lt;/button&gt;</span>
+  <span class="tag">&lt;div</span> <span class="attr">class</span>=<span class="val">"follower"</span><span class="tag">&gt;</span>div<span class="tag">&lt;/div&gt;</span>
+<span class="tag">&lt;/div&gt;</span>
 
-<span class="comment">/* ボタン側: 名前を付ける */</span>
+<span class="comment">/* ① Flexbox でボタンの位置を制御 */</span>
+.stage {
+  <span class="prop">display</span>: flex;
+}
+.stage[<span class="attr">data-align</span>=<span class="val">"left"</span>]   { <span class="prop">justify-content</span>: flex-start; }
+.stage[<span class="attr">data-align</span>=<span class="val">"center"</span>] { <span class="prop">justify-content</span>: center; }
+.stage[<span class="attr">data-align</span>=<span class="val">"right"</span>]  { <span class="prop">justify-content</span>: flex-end; }
+
+<span class="comment">/* ② ボタン側: アンカーに名前を付ける */</span>
 .anchor {
   <span class="prop">anchor-name</span>: --my-anchor;
 }
 
-<span class="comment">/* div 側: 名前で参照 */</span>
+<span class="comment">/* ③ div 側: anchor() で位置を参照 */</span>
+<span class="comment">/* position: absolute なので flex の影響を受けない */</span>
 .follower {
   <span class="prop">position</span>: absolute;
-  <span class="comment">/* div の上端 = ボタンの下端 */</span>
-  <span class="prop">top</span>: <span class="fn">anchor</span>(--my-anchor bottom);
-  <span class="comment">/* div の左端 = ボタンの左端 */</span>
+  <span class="prop">top</span>:  <span class="fn">anchor</span>(--my-anchor bottom);
   <span class="prop">left</span>: <span class="fn">anchor</span>(--my-anchor left);
-}</pre>
+}
+
+<span class="comment">/* JS は data-align 属性を書き換えるだけ */</span></pre>
     </div>
   </div>
 </section>
